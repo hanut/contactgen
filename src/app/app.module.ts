@@ -6,6 +6,7 @@ import { StatusBar } from '@ionic-native/status-bar';
 import { Contacts } from '@ionic-native/contacts';
 import { AndroidPermissions } from '@ionic-native/android-permissions';
 import { MyApp } from './app.component';
+import { SimpleTimer } from 'ng2-simple-timer';
 import { HomePage } from '../pages/home/home';
 
 @NgModule({
@@ -27,7 +28,8 @@ import { HomePage } from '../pages/home/home';
     SplashScreen,
     {provide: ErrorHandler, useClass: IonicErrorHandler},
     Contacts,
-    AndroidPermissions
+    AndroidPermissions,
+    SimpleTimer
   ]
 })
 export class AppModule {}

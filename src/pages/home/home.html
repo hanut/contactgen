@@ -7,6 +7,11 @@
 </ion-header>
 
 <ion-content padding>
-  <h1 *ngIf="!isDone" styl>Inserting Contacts</h1>
-  <h1 *ngIf="isDone" styl>Done</h1>
+  <div style="text-align: center;">
+    <button ion-button color="dark" (click)="deferedCG()" *ngIf="!isStarted">START</button>
+    <button ion-button color="red" (click)="stopCG()" *ngIf="isStarted">STOP</button>
+  </div>
+  <h1 *ngIf="!isDone && isStarted">Inserting Contacts</h1>
+  <div *ngIf="!isDone && (count > 0)" class="counter">{{count}}</div>
+  <h1 *ngIf="isDone && isStarted">Done</h1>
 </ion-content>

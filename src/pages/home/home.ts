@@ -1,8 +1,10 @@
 import { Component } from '@angular/core';
 import { NavController } from 'ionic-angular';
 import { Contacts, Contact, ContactField, ContactName } from '@ionic-native/contacts';
-import * as chance from 'chance';
 import { AndroidPermissions } from '@ionic-native/android-permissions';
+import * as chance from 'chance';
+import { SimpleTimer } from 'ng2-simple-timer';
+
 
 @Component({
 	selector: 'page-home',
@@ -10,56 +12,81 @@ import { AndroidPermissions } from '@ionic-native/android-permissions';
 })
 export class HomePage {
 	public isDone : boolean = false;
+	public isStarted : boolean = false;
 	private count : number = 0;
+	private ch: any;
+	private ticks: number = 0;
 
-	constructor(public navCtrl: NavController,private contacts: Contacts,private androidPermissions: AndroidPermissions) {
+	constructor(public navCtrl: NavController,private contacts: Contacts,private androidPermissions: AndroidPermissions,
+		private st: SimpleTimer) {
+
+		this.ch = new chance();
 
 	}
 
-	ionViewDidLoad(){
+	ionViewDidLoad () {
 		console.log("Started entry");
-		this.androidPermissions.checkPermission(this.androidPermissions.PERMISSION.WRITE_CONTACTS).then(
-			success => this.startEntry(),
-			err => this.requestPermissions()
-		);
-		// this.startEntry();
+		this.androidPermissions.checkPermission(this.androidPermissions.PERMISSION.WRITE_CONTACTS).then((success) => {
+			// this.deferedCG()
+		}, (error) => {
+			this.requestPermissions()
+		});
 	}
 
-	startEntry(){
-		let ch = new chance();
-		this.count = 5000;
-		let promise = new Promise((resolve,reject)=>{
-			for (var i = this.count; i > 0; i--) {
-				let contact : Contact = this.contacts.create();
-				console.log(contact);
-				debugger;
-				contact.name = new ContactName(null, null, ch.name());
-				contact.phoneNumbers = [new ContactField('mobile', ch.phone())];
-				contact.save().then(
-					() => {
-						console.log('Contact saved!', contact);
-						this.count--;
-						if(this.count==0){
-							resolve();
-						}
-					},
-					(error: any) => console.error('Error saving contact.', error)
-				);
+	deferedCG () {
+		if ( !this.isStarted ) {
+			this.isStarted = true
+		}
+		this.st.newTimer('dcg', 0.01);
+		this.st.subscribe('dcg', () => {
+			if (this.ticks == 1) {
+				this.ticks = 0
+				this.st.unsubscribe('dcg');
+				this.st.delTimer('dcg');
+				this.generateContact().then((contact) => {
+					console.log(contact)
+					this.count++
+					this.deferedCG()
+				}, (error) => {
+					console.log(error)
+				})
+			} else {
+				this.ticks++
 			}
 		});
+	}
 
-		promise.then(this.insertDone).catch((reason)=>{this.insertFailed(reason)});
-		
+	stopCG () {
+		this.st.unsubscribe('dcg');
+		this.st.delTimer('dcg');
+		this.isStarted = false
+	}
+
+	generateContact (): Promise<any> {
+		return new Promise((resolve, reject) => {
+			let contact: Contact = this.contacts.create();
+			contact.name = new ContactName(null, null, this.ch.name());
+			contact.phoneNumbers = [new ContactField('mobile', this.ch.phone())];
+			resolve(contact)
+			contact.save().then(() => {
+				resolve(contact);
+			}, (error: any) => {
+				console.error('Error saving contact.', error);
+				reject(error);
+			});
+		});
 	}
 
 	requestPermissions(){
 		let permissions = [
-			this.androidPermissions.PERMISSION.WRITE_CONTACTS,
-			this.androidPermissions.PERMISSION.READ_CONTACTS
+		this.androidPermissions.PERMISSION.WRITE_CONTACTS,
+		this.androidPermissions.PERMISSION.READ_CONTACTS
 		];
-		this.androidPermissions.requestPermissions(permissions)
-			.then((response)=>{console.log(response);})
-			.catch((reason)=>{console.log(reason);})
+		this.androidPermissions.requestPermissions(permissions).then((response)=>{
+			console.log(response);
+		}).catch((reason)=>{
+			console.log(reason);
+		})
 	}
 
 	insertDone(){
