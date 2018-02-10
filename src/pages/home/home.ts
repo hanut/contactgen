@@ -37,7 +37,7 @@ export class HomePage {
 		if ( !this.isStarted ) {
 			this.isStarted = true
 		}
-		this.st.newTimer('dcg', 0.01);
+		this.st.newTimer('dcg', 0.05);
 		this.st.subscribe('dcg', () => {
 			if (this.ticks == 1) {
 				this.ticks = 0
